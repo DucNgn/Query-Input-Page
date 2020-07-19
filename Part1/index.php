@@ -12,7 +12,6 @@
   table {
     width: 60%;
   }
-
   </style>
   </head>
 <body>
@@ -28,41 +27,82 @@
   </form>
 
   <?php
-  $creds = json_decode(file_get_contents('credentials.json'), true);
+  // Function to check if querry contains words in blacklist
+  function containsProhibited($str)
+  {
+    $blacklist = array("CREATE", "ALTER", "DROP", "BACKUP", "INSERT");
+    foreach($blacklist as $a) {
+      if (stripos($str,$a) !== false) return true;
+    }
+    return false;
+  }
 
+  // Get credentials
+  $creds = json_decode(file_get_contents('credentials.json'), true);
   $host_name = $creds["HOSTNAME"];
   $user = $creds["DB_USER"];
   $password = $creds["DB_PASSWORD"];
   $DBname = $creds["DB_NAME"];
 
+  // Connect to the database
   $conn = mysqli_connect($host_name, $user, $password, $DBname);
   if(!$conn){
+    echo "
+    <div class=\"alert alert-danger\" role=\"alert\">
+      Cannot connect to the database. Please try again
+    </div>
+    ";
     die("Connection failed: ".mysqli_connect_error());
   }
 
+  // Handle POST request
   if(isset($_POST['sqlRequest'])) {
-    $query = $_POST['sqlRequest'];   
+    $query = $_POST['sqlRequest']; 
+
+    // Check for modification attempt
+    if(containsProhibited($query)) {
+      echo "
+      <div class=\"alert alert-danger\" role=\"alert\">
+        Modification of the database is not allowed.
+      </div>
+      ";
+      exit(0);
+    }  
+
     $result = mysqli_query($conn,$query);
-    $fields = array();
 
-    echo "<center><table>";
-    // Headers
-    echo "<tr class=\"table-primary\">";
-    while ($property = mysqli_fetch_field($result)) {
-      echo '<th>' . $property->name . '</th>';  
-      array_push($fields, $property->name); 
-    }
-    echo '</tr>';
-
-    // Body
-    while ($row = mysqli_fetch_array($result)) {
-      echo "<tr>";
-      foreach ($fields as $item) {
-          echo '<td>' . $row[$item] . '</td>'; 
+    // Check for valid SQL query
+    if(!empty($result)) {
+      // Load and display table
+      $fields = array();
+      echo "<center><table>";
+      // Headers
+      echo "<tr class=\"table-primary\">";
+      while ($property = mysqli_fetch_field($result)) {
+        echo '<th>' . $property->name . '</th>';  
+        array_push($fields, $property->name); 
       }
       echo '</tr>';
-    } 
-    echo "</table></center>";
+  
+      // Body
+      while ($row = mysqli_fetch_array($result)) {
+        echo "<tr>";
+        foreach ($fields as $item) {
+            echo '<td>' . $row[$item] . '</td>'; 
+        }
+        echo '</tr>';
+      } 
+      echo "</table></center>";
+      
+    } else {
+      echo "
+        <div class=\"alert alert-danger\" role=\"alert\">
+          Your query is invalid. Please try again
+        </div>
+      ";
+
+    }
+
   }
 
   mysqli_close($conn);
