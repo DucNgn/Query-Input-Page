@@ -15,11 +15,14 @@
   </style>
   </head>
 <body>
-  <form accept-charset="utf-8" action="#" method='POST'>
+  <div class="container">
+  <div class="row">
+  <div class="col-md-12">
+  <form accept-charset="utf-8" action="#" method='POST' style="padding-top:5%">
     <div class="form-group">
       <center>
         <h1> Insert MySQL query </h1>
-        <textarea class="form-control" required name="sqlRequest" placeholder="SQL query" rows="3"></textarea>
+        <textarea class="form-control" required name="sqlRequest" placeholder="SQL query" rows="3"><?php if (isset($_POST['sqlRequest'])) echo $_POST['sqlRequest']; ?></textarea>
         <br>
         <button class="btn btn-primary" type="submit">Submit</button>
       </center>
@@ -75,7 +78,7 @@
     if(!empty($result)) {
       // Load and display table
       $fields = array();
-      echo "<center><table>";
+      echo "<center><div class='table-responsive'><table class='table table-condensed'>";
       // Headers
       echo "<tr class=\"table-primary\">";
       while ($property = mysqli_fetch_field($result)) {
@@ -92,7 +95,7 @@
         }
         echo '</tr>';
       } 
-      echo "</table></center>";
+      echo "</table></div></center>";
       
     } else {
       echo "
@@ -107,6 +110,8 @@
 
   mysqli_close($conn);
 ?>
-
+</div>
+</div>
+</div>
 </body>
 </html>
